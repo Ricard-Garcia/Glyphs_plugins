@@ -27,8 +27,11 @@ class ChangeCase(PalettePlugin):
 		self.paletteView = Window((width, height))
 		self.paletteView.group = Group((0, 0, width, height))
 		self.paletteView.group.UCButton = Button((10, -85, width-7, 20), "Uppercase", callback=self.upperCallback)
+		self.paletteView.group.UCButton.getNSButton().setToolTip_(u"ABC Abc abc → ABC ABC ABC")
 		self.paletteView.group.lcButton = Button((10, -60, width-7, 20), "Lowercase", callback=self.lowerCallback)
+		self.paletteView.group.lcButton.getNSButton().setToolTip_(u"ABC Abc abc → abc abc abc")
 		self.paletteView.group.titleButton = Button((10, -35, width-7, 20), "Title", callback=self.titleCallback)
+		self.paletteView.group.titleButton.getNSButton().setToolTip_(u"ABC Abc abc → Abc Abc Abc")
 		
 		# Set dialog to NSView
 		self.dialog = self.paletteView.group.getNSView()
@@ -39,21 +42,24 @@ class ChangeCase(PalettePlugin):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			thisFont.currentText = thisFont.currentText.upper()
+			if thisFont.currentText:
+				thisFont.currentText = thisFont.currentText.upper()
 		
 	# Lowercase
 	def lowerCallback(self, sender):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			thisFont.currentText = thisFont.currentText.lower()
+			if thisFont.currentText:
+				thisFont.currentText = thisFont.currentText.lower()
 	
 	# Title
 	def titleCallback(self, sender):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			thisFont.currentText = thisFont.currentText.title()
+			if thisFont.currentText:
+				thisFont.currentText = thisFont.currentText.title()
 
 
 
