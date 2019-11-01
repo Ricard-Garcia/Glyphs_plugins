@@ -11,7 +11,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.RicardGarcia.ChangeCase</string>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>1.0</string>
+	<string>2.0</string>
 	<key>CFBundleName</key>
 	<string>ChangeCase</string>
 	<key>CFBundlePackageType</key>
