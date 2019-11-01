@@ -42,24 +42,24 @@ class ChangeCase(PalettePlugin):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			if thisFont.currentText:
-				thisFont.currentText = thisFont.currentText.upper()
+			if thisFont.currentTab.text:
+				thisFont.currentTab.text = thisFont.currentTab.text.upper()
 		
 	# Lowercase
 	def lowerCallback(self, sender):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			if thisFont.currentText:
-				thisFont.currentText = thisFont.currentText.lower()
+			if thisFont.currentTab.text:
+				thisFont.currentTab.text = thisFont.currentTab.text.lower()
 	
 	# Title
 	def titleCallback(self, sender):
 		windowController = self.windowController()
 		if windowController:
 			thisFont = windowController.document().font
-			if thisFont.currentText:
-				thisFont.currentText = thisFont.currentText.title()
+			if thisFont.currentTab.text:
+				thisFont.currentTab.text = thisFont.currentTab.text.title()
 
 
 
