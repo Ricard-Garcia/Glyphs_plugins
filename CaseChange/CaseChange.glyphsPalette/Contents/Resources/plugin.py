@@ -19,6 +19,7 @@ class ChangeCase(PalettePlugin):
 
 	def settings(self):
 		self.name = "Change Case"
+		self.Font = Glyphs.font
 
 		# Create Vanilla window and group with controls
 		width = 150
@@ -36,25 +37,216 @@ class ChangeCase(PalettePlugin):
 		self.dialog = self.paletteView.group.getNSView()
 	
 	def changeCaseCallback(self, sender):
-		windowController = self.windowController()
+
+		Glyphs.clearLog()
+
+	
+		currentTab = self.Font.currentTab
 		
-		if windowController:
-			thisFont = windowController.document().font
-			currentTab = thisFont.currentTab
+		# check if there is a tab open that contains text:
+		if currentTab and currentTab.text:
 			
-			# check if there is a tab open that contains text:
-			if currentTab and currentTab.text:
+			tab = self.Font.currentTab
+			currentLayers = tab.layers
+
+			# Text to be used to replace the current text
+			newText = ""
+			for i, l in enumerate(currentLayers):
 				
-				# query current text in tab:
-				tabText = currentTab.text
-				
-				# change case depending on which button was pressed:
+				# Glyph object
+				f = Glyphs.font
+				g = l.parent
+
+				# Uppercaseable scripts
+				scriptsUC = ["latin", "cyrillic", "greek"]
+
+				# Categories that change
+				changeCat = ["Letter", "Number"]
+
+				# **************************************************
+				# Change case depending on which button was pressed:
+
+				# UPPERCASE
 				if sender == self.paletteView.group.UCButton:
-					tabText = tabText.upper()
-				elif sender == self.paletteView.group.lcButton:
-					tabText = tabText.lower()
-				elif sender == self.paletteView.group.titleButton:
-					tabText = tabText.title()
+					print("Uppercase text!")
 					
-				# replace text in tab:
-				thisFont.currentTab.text = tabText
+					# If the character is not "latin" but still inside the category
+					if g.script not in scriptsUC and g.category == "Letter":
+						# Test
+						print(g.name)
+
+					# Avoid new line
+					if l.parent.name == None:
+						# Test
+						print("New line!")
+						newText += "\n"
+
+					else:
+
+						# All characters that are not letter or number
+						if g.category not in changeCat:
+							newText += "/%s " % (g.name)
+					
+
+						# Letter
+						if g.script == "cyrillic":
+							upperG = g.name[0].upper()+g.name[1:]
+						else:
+							upperG = g.name.title()
+
+						if currentLayers[i-1].parent.category == "Separator" and g.category == "Letter":
+							# Test
+							#print("After space", upperG)
+							newText += "/%s " % (upperG)
+
+						elif g.category == "Letter":
+							# Test
+							#print(upperG)
+							newText += "/%s " % (upperG)
+					
+							
+						# Number
+						if g.category == "Number":
+							if g.name.replace('.osf','') in f.glyphs:
+								# Test
+								#print(g.name.replace('.osf',''))
+								newText += "/%s " % (g.name.replace('.osf',''))
+								
+							else:
+								# Test
+								#print(g.name)
+								newText += "/%s " % (g.name)
+
+
+
+
+				# LOWERCASE
+				if sender == self.paletteView.group.lcButton:
+					print("Lowercase text!")
+					
+					# If the character is not "latin" but still inside the category
+					if g.script not in scriptsUC and g.category == "Letter":
+						# Test
+						print(g.name)						
+
+					# Avoid new line
+					if l.parent.name == None:
+						# Test
+						print("New line!")
+						newText += "\n"
+
+					else:
+
+						# All characters that are not letter or number
+						if g.category not in changeCat:
+							newText += "/%s " % (g.name)
+					
+						# Letter
+						lowerG = g.name.lower()
+						if currentLayers[i-1].parent.category == "Separator" and g.category == "Letter":
+							# Test
+							#print("After space", lowerG)
+							newText += "/%s " % (lowerG)
+
+						elif g.category == "Letter":
+							# Test
+							#print(lowerG)
+							newText += "/%s " % (lowerG)
+					
+							
+						# Number
+						if g.category == "Number":
+							if g.name+('.osf') in f.glyphs:
+							
+								# Test
+								#print(g.name+('.osf'))
+								newText += "/%s " % (g.name+('.osf'))
+					
+							else:
+								# Test
+								#print(g.name)
+								newText += "/%s " % (g.name)
+
+
+				# TITLE
+				if sender == self.paletteView.group.titleButton:
+					print("Title text!")
+					
+					# If the character is not "latin" but still inside the category
+					if g.script not in scriptsUC and g.category == "Letter":
+						# Test
+						print(g.name)						
+
+					# Avoid new line
+					if l.parent.name == None:
+						# Test
+						print("New line!")
+						newText += "\n"
+
+					else:
+
+						# All characters that are not letter or number
+						if g.category not in changeCat:
+							newText += "/%s " % (g.name)
+					
+					
+						# Letter
+						if g.script == "cyrillic":
+							upperG = g.name[0].upper()+g.name[1:]
+						else:
+							upperG = g.name.title()
+
+						lowerG = g.name.lower()
+
+						# First character in text in uppercase
+						if i == 0:
+							newText += "/%s " % (upperG)
+
+						if currentLayers[i-1].parent.category == "Separator" and g.category == "Letter":
+							# Test
+							#print("After space", upperG)
+							newText += "/%s " % (upperG)
+
+						elif g.category == "Letter":
+							# First character has been already replaced and needs to be avoided
+							if i == 0:
+								pass
+
+							else:
+								# Test
+								#print(lowerG)
+								newText += "/%s " % (lowerG)
+					
+							
+						# Number
+						if g.category == "Number":
+							if g.name+('.osf') in f.glyphs:
+							
+								# Test
+								#print(g.name+('.osf'))
+								newText += "/%s " % (g.name+('.osf'))
+					
+							else:
+								# Test
+								#print(g.name)
+								newText += "/%s " % (g.name)
+
+
+
+		# replace text in tab:
+		self.Font.currentText = newText				
+
+
+
+ChangeCase()
+
+
+# ---------------------
+# Test
+# ---------------------
+print("Done!")	
+
+
+
+
+
