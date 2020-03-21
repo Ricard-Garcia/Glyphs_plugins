@@ -14,6 +14,8 @@
 from GlyphsApp.plugins import *
 from vanilla import *
 
+# Uppercaseable scripts
+scriptsUC = ["latin", "cyrillic", "greek"]
 
 class ChangeCase(PalettePlugin):
 
@@ -47,21 +49,14 @@ class ChangeCase(PalettePlugin):
 			
 			tab = self.Font.currentTab
 			currentLayers = tab.layers
+			f = self.windowController().documentFont()
 
 			# Text to be used to replace the current text
 			newText = ""
 			for i, l in enumerate(currentLayers):
 				
 				# Glyph object
-				f = Glyphs.font
 				g = l.parent
-
-				# Uppercaseable scripts
-				scriptsUC = ["latin", "cyrillic", "greek"]
-
-				# Categories that change
-				changeCat = ["Letter", "Number"]
-
 				# **************************************************
 				# Change case depending on which button was pressed:
 
