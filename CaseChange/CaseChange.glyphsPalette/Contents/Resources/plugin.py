@@ -21,8 +21,6 @@ class ChangeCase(PalettePlugin):
 
 	def settings(self):
 		self.name = "Change Case"
-		self.Font = Glyphs.font
-
 		# Create Vanilla window and group with controls
 		width = 150
 		height = 90
