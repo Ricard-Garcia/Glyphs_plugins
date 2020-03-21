@@ -41,16 +41,13 @@ class ChangeCase(PalettePlugin):
 	def changeCaseCallback_(self, sender):
 		Glyphs.clearLog()
 
-	
-		currentTab = self.Font.currentTab
-		
+		tab = self.windowController().activeEditViewController()
+
 		# check if there is a tab open that contains text:
-		if currentTab and currentTab.text:
-			
-			tab = self.Font.currentTab
-			currentLayers = tab.layers
+		if tab and tab.text:
 			f = self.windowController().documentFont()
 
+			currentLayers = tab.layers
 			# Text to be used to replace the current text
 			newText = ""
 			for i, l in enumerate(currentLayers):
@@ -227,20 +224,8 @@ class ChangeCase(PalettePlugin):
 
 
 
-		# replace text in tab:
-		self.Font.currentText = newText				
 
 
 
-ChangeCase()
-
-
-# ---------------------
-# Test
-# ---------------------
-print("Done!")	
-
-
-
-
-
+			# replace text in tab:
+			tab.text = newText
