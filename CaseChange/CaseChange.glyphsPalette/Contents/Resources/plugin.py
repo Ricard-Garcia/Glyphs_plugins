@@ -1,4 +1,5 @@
 # encoding: utf-8
+from __future__ import division, print_function, unicode_literals
 
 ###########################################################################################################
 #
@@ -11,116 +12,63 @@
 #
 ###########################################################################################################
 
+import objc
+from GlyphsApp import *
 from GlyphsApp.plugins import *
-from vanilla import *
 
-# Uppercaseable scripts
-scriptsUC = ["latin", "cyrillic", "greek"]
-
-class ChangeCase(PalettePlugin):
-
-	def settings(self):
-		self.name = "Change Case"
-		# Create Vanilla window and group with controls
-		width = 150
-		height = 90
-		self.paletteView = Window((width, height))
-		self.paletteView.group = Group((0, 0, width, height))
-		self.paletteView.group.UCButton = Button((10, -85, width-7, 20), "Uppercase", callback=self.changeCaseCallback_)
-		self.paletteView.group.UCButton.getNSButton().setToolTip_(u"ABC Abc abc → ABC ABC ABC")
-		self.paletteView.group.lcButton = Button((10, -60, width-7, 20), "Lowercase", callback=self.changeCaseCallback_)
-		self.paletteView.group.lcButton.getNSButton().setToolTip_(u"ABC Abc abc → abc abc abc")
-		self.paletteView.group.titleButton = Button((10, -35, width-7, 20), "Title", callback=self.changeCaseCallback_)
-		self.paletteView.group.titleButton.getNSButton().setToolTip_(u"ABC Abc abc → Abc Abc Abc")
-
-		# Set dialog to NSView
-		self.dialog = self.paletteView.group.getNSView()
+class ____PluginClassName____ (PalettePlugin):
 	
-	def changeCaseCallback_(self, sender):
-		Glyphs.clearLog()
+	dialog = objc.IBOutlet()
+	textField = objc.IBOutlet()
 
-		tab = self.windowController().activeEditViewController()
+	@objc.python_method
+	def settings(self):
+		self.name = Glyphs.localize({
+			'en': 'My Palette',
+			'de': 'Meine Palette',
+			'fr': 'Ma palette',
+			'es': 'Mi panel',
+			'pt': 'Meu painel',
+			})
+		
+		# Load .nib dialog (without .extension)
+		self.loadNib('IBdialog', __file__)
 
-		# check if there is a tab open that contains text:
-		if tab and tab.text:
-			f = self.windowController().documentFont()
+	@objc.python_method
+	def start(self):
+		# Adding a callback for the 'GSUpdateInterface' event
+		Glyphs.addCallback(self.update, UPDATEINTERFACE)
 
-			currentLayers = tab.layers
-			# Text to be used to replace the current text
-			newText = ""
-			for i, l in enumerate(currentLayers):
+	@objc.python_method	
+	def __del__(self):
+		Glyphs.removeCallback(self.update)
 
-				# Glyph object
-				g = l.parent
-				
-				# Avoid new line
-				if g.name == None:
-					newText += "\n"
-					continue
-				# **************************************************
-				# Change case depending on which button was pressed:
+	@objc.python_method
+	def update(self, sender):
+		
+		text = []
+		# Extract font from sender
+		font = sender.object()
+		# We’re in the Edit View
+		if font.currentTab:
+			# Check whether glyph is being edited
+			if len(font.selectedLayers) == 1:
+				layer = font.selectedLayers[0]
+				text.append('Selected nodes: %s' % len(layer.selection))
+				if layer.selection:
+					text.append('Selection bounds: %sx%s' % (int(layer.selectionBounds.size.width), int(layer.selectionBounds.size.height)))
 
-				# UPPERCASE
-				if sender == self.paletteView.group.UCButton:
-					print("Uppercase text!")
+		# We’re in the Font view
+		else:
+			try:
+				text.append('Selected glyphs: %s' % len(font.selection))
+			except:
+				pass
 
-					# Letter
-					if g.category == "Letter" and g.script in scriptsUC:
-						if g.script == "cyrillic":
-							upperG = g.name[0].upper() + g.name[1:]
-						else:
-							upperG = g.name.title()
+		# Send text to dialog to display
+		self.textField.setStringValue_('\n'.join(text))
 
-						newText += "/%s " % (upperG)
-
-					# Number
-					elif g.category == "Number" and g.name.replace('.osf', '') in f.glyphs:
-						newText += "/%s " % (g.name.replace('.osf', ''))
-
-					#everything else
-					else:
-						newText += "/%s " % (g.name)
-
-				# LOWERCASE
-				if sender == self.paletteView.group.lcButton:
-					print("Lowercase text!")
-
-					# Letter
-					if g.category == "Letter" and g.script in scriptsUC:
-						lowerG = g.name.lower()
-						newText += "/%s " % (lowerG)
-
-					# Number
-					elif g.category == "Number" and g.name + ('.osf') in f.glyphs:
-						newText += "/%s " % (g.name + ('.osf'))
-
-					#everything else
-					else:
-						newText += "/%s " % (g.name)
-
-				# TITLE
-				if sender == self.paletteView.group.titleButton:
-					print("Title text!")
-
-					# Letter
-					if g.category == "Letter" and g.script in scriptsUC:
-						newName = g.name
-						if i == 0:
-							if g.script == "cyrillic":
-								newName = g.name[0].upper() + g.name[1:]
-							else:
-								newName = g.name.title()
-						else:
-							newName = g.name.lower()
-						newText += "/%s " % (newName)
-
-					# Number
-					elif g.category == "Number" and g.name + ('.osf') in f.glyphs:
-						newText += "/%s " % (g.name + ('.osf'))
-
-					#everything else
-					else:
-						newText += "/%s " % (g.name)
-
-			# replace text in tab:
-			tab.text = newText
+	@objc.python_method
+	def __file__(self):
+		"""Please leave this method unchanged"""
+		return __file__
