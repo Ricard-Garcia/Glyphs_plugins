@@ -12,10 +12,20 @@
 ###########################################################################################################
 
 from GlyphsApp.plugins import *
-from vanilla import *
+from vanilla import Window, Button, Group
 
-# Uppercaseable scripts
-scriptsUC = ["latin", "cyrillic", "greek"]
+# Casefolding scripts:
+scriptsUC = (
+	"latin",
+	"cyrillic",
+	"greek",
+	"armenian",
+	"georgian",
+	"adlam",
+	"coptic",
+	"glagolitic",
+	"rovas",
+	)
 
 class ChangeCase(PalettePlugin):
 
@@ -36,91 +46,138 @@ class ChangeCase(PalettePlugin):
 		# Set dialog to NSView
 		self.dialog = self.paletteView.group.getNSView()
 	
+	@objc.python_method
+	def casefoldChar(self, thisChar, case="lower"):
+		if case=="upper":
+			return thisChar.upper()
+		return thisChar.lower()
+	
+	@objc.python_method
+	def separateCoreFromSuffix(self, glyphName):
+		if "." in glyphName:
+			firstPart = glyphName[:glyphName.find(".")]
+			secondPart = glyphName[glyphName.find("."):]
+			return firstPart, secondPart
+		else:
+			return glyphName, ""
+	
+	@objc.python_method
+	def glyphNameForCase(self, glyphName, case="lower"):
+		thisChar = Glyphs.glyphInfoForName(glyphName).unicharString()
+		if thisChar:
+			casefoldedChar = self.casefoldChar(thisChar, case=case)
+			casefoldedGlyphName = Glyphs.niceGlyphName(casefoldedChar)
+			return casefoldedGlyphName
+		elif "." in glyphName[1:] and glyphName[0]!=".":
+			coreGlyphName, suffix = self.separateCoreFromSuffix(glyphName)
+			caseFoldedCoreGlyphName = self.glyphNameForCase(coreGlyphName, case)
+			return caseFoldedCoreGlyphName+suffix
+		else:
+			# cannot casefold
+			return glyphName
+	
 	def changeCaseCallback_(self, sender):
-		Glyphs.clearLog()
+		if Glyphs.defaults["com.RicardGarcia.ChangeCase.verboseReport"]:
+			Glyphs.clearLog()
 
 		tab = self.windowController().activeEditViewController()
 
 		# check if there is a tab open that contains text:
 		if tab and tab.text:
 			f = self.windowController().documentFont()
-
+			previousGlyphTypeIsSeparator = True
 			currentLayers = tab.layers
 			# Text to be used to replace the current text
 			newText = ""
 			for i, l in enumerate(currentLayers):
-
 				# Glyph object
 				g = l.parent
 				
-				# Avoid new line
+				# Avoid new line:
 				if g.name == None:
 					newText += "\n"
+					previousGlyphTypeIsSeparator = True
 					continue
+				
+				# Skip non-letters relevant for title case:
+				if g.category in ("Separator", "Symbol", "Punctuation", "Mark", "Icon"):
+					newText += "/%s" % g.name
+					previousGlyphTypeIsSeparator = True
+					continue
+
 				# **************************************************
 				# Change case depending on which button was pressed:
 
 				# UPPERCASE
 				if sender == self.paletteView.group.UCButton:
-					print("Uppercase text!")
+					if Glyphs.defaults["com.RicardGarcia.ChangeCase.verboseReport"]:
+						print("Uppercase: %s"%g.name)
 
 					# Letter
 					if g.category == "Letter" and g.script in scriptsUC:
-						if g.script == "cyrillic":
-							upperG = g.name[0].upper() + g.name[1:]
-						else:
-							upperG = g.name.title()
-
-						newText += "/%s " % (upperG)
+						newGlyphName = self.glyphNameForCase(g.name, case="upper")
+						if not f.glyphs[newGlyphName]:
+							# leave it if casefolded version does not exist:
+							newGlyphName = g.name
+						newText += "/%s " % (newGlyphName)
 
 					# Number
-					elif g.category == "Number" and g.name.replace('.osf', '') in f.glyphs:
-						newText += "/%s " % (g.name.replace('.osf', ''))
+					elif g.category == "Number" and f.glyphs[g.name.replace('.osf', '').replace('.tosf','.tf')]:
+						newText += "/%s " % (g.name.replace('.osf', '').replace('.tosf','.tf'))
 
 					#everything else
 					else:
 						newText += "/%s " % (g.name)
 
 				# LOWERCASE
-				if sender == self.paletteView.group.lcButton:
-					print("Lowercase text!")
+				elif sender == self.paletteView.group.lcButton:
+					if Glyphs.defaults["com.RicardGarcia.ChangeCase.verboseReport"]:
+						print("Lowercase: %s"%g.name)
 
 					# Letter
 					if g.category == "Letter" and g.script in scriptsUC:
-						lowerG = g.name.lower()
-						newText += "/%s " % (lowerG)
+						newGlyphName = self.glyphNameForCase(g.name, case="lower")
+						if not f.glyphs[newGlyphName]:
+							# leave it if casefolded version does not exist:
+							newGlyphName = g.name
+						newText += "/%s " % (newGlyphName)
 
 					# Number
-					elif g.category == "Number" and g.name + ('.osf') in f.glyphs:
-						newText += "/%s " % (g.name + ('.osf'))
+					elif g.category == "Number" and f.glyphs[g.name+'.osf']:
+						newText += "/%s " % (g.name+'.osf')
 
 					#everything else
 					else:
 						newText += "/%s " % (g.name)
 
 				# TITLE
-				if sender == self.paletteView.group.titleButton:
-					print("Title text!")
+				elif sender == self.paletteView.group.titleButton:
+					if Glyphs.defaults["com.RicardGarcia.ChangeCase.verboseReport"]:
+						print("Title: %s"%g.name)
 
 					# Letter
 					if g.category == "Letter" and g.script in scriptsUC:
 						newName = g.name
-						if i == 0:
-							if g.script == "cyrillic":
-								newName = g.name[0].upper() + g.name[1:]
-							else:
-								newName = g.name.title()
+						if previousGlyphTypeIsSeparator:
+							casefoldTarget = "upper"
 						else:
-							newName = g.name.lower()
-						newText += "/%s " % (newName)
+							casefoldTarget = "lower"
+						
+						newGlyphName = self.glyphNameForCase(g.name, case=casefoldTarget)
+						if not f.glyphs[newGlyphName]:
+							# leave it if casefolded version does not exist:
+							newGlyphName = g.name
+						newText += "/%s " % (newGlyphName)
 
 					# Number
-					elif g.category == "Number" and g.name + ('.osf') in f.glyphs:
-						newText += "/%s " % (g.name + ('.osf'))
+					elif g.category == "Number" and f.glyphs[g.name+'.osf']:
+						newText += "/%s " % (g.name+'.osf')
 
 					#everything else
 					else:
 						newText += "/%s " % (g.name)
-
+				
+				previousGlyphTypeIsSeparator = False
+				
 			# replace text in tab:
 			tab.text = newText
