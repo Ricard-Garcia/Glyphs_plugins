@@ -103,6 +103,7 @@ class ChangeCase(PalettePlugin):
 						newLayers.append( layer )
 					elif i >= selectionEnd:
 						newLayersEnd.append( layer )
+
 			
 			for i, l in enumerate(currentLayers):
 				# Glyph object
@@ -164,8 +165,7 @@ class ChangeCase(PalettePlugin):
 
 					#everything else
 					else:
-						newGlyphName = g.name+'.osf'
-						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
+						newLayers.append( l )
 
 				# TITLE
 				elif sender == self.paletteView.group.titleButton:
