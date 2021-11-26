@@ -86,22 +86,38 @@ class ChangeCase(PalettePlugin):
 		if tab and tab.text:
 			f = self.windowController().documentFont()
 			previousGlyphTypeIsSeparator = True
-			currentLayers = tab.layers
-			# Text to be used to replace the current text
-			newText = ""
+		
+			# change the whole tab
+			if tab.textRange == 0:
+				currentLayers = tab.layers
+				newLayers = []
+			# change selected glyphs only
+			else:
+				selectionStart = tab.textCursor
+				selectionEnd = tab.textCursor + tab.textRange
+				currentLayers = tab.layers[selectionStart : selectionEnd]
+				newLayers, newLayersEnd = [], []
+
+				for i, layer in enumerate(tab.layers):
+					if i < selectionStart:
+						newLayers.append( layer )
+					elif i >= selectionEnd:
+						newLayersEnd.append( layer )
+
+			
 			for i, l in enumerate(currentLayers):
 				# Glyph object
 				g = l.parent
 				
 				# Avoid new line:
 				if g.name == None:
-					newText += "\n"
+					newLayers.append( l )
 					previousGlyphTypeIsSeparator = True
 					continue
 				
 				# Skip non-letters relevant for title case:
 				if g.category in ("Separator", "Symbol", "Punctuation", "Mark", "Icon"):
-					newText += "/%s" % g.name
+					newLayers.append( l )
 					previousGlyphTypeIsSeparator = True
 					continue
 
@@ -119,15 +135,15 @@ class ChangeCase(PalettePlugin):
 						if not f.glyphs[newGlyphName]:
 							# leave it if casefolded version does not exist:
 							newGlyphName = g.name
-						newText += "/%s " % (newGlyphName)
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 
 					# Number
 					elif g.category == "Number" and f.glyphs[g.name.replace('.osf', '').replace('.tosf','.tf')]:
-						newText += "/%s " % (g.name.replace('.osf', '').replace('.tosf','.tf'))
-
+						newGlyphName = g.name.replace('.osf', '').replace('.tosf','.tf')
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 					#everything else
 					else:
-						newText += "/%s " % (g.name)
+						newLayers.append( l )
 
 				# LOWERCASE
 				elif sender == self.paletteView.group.lcButton:
@@ -140,15 +156,16 @@ class ChangeCase(PalettePlugin):
 						if not f.glyphs[newGlyphName]:
 							# leave it if casefolded version does not exist:
 							newGlyphName = g.name
-						newText += "/%s " % (newGlyphName)
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 
 					# Number
 					elif g.category == "Number" and f.glyphs[g.name+'.osf']:
-						newText += "/%s " % (g.name+'.osf')
+						newGlyphName = g.name+'.osf'
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 
 					#everything else
 					else:
-						newText += "/%s " % (g.name)
+						newLayers.append( l )
 
 				# TITLE
 				elif sender == self.paletteView.group.titleButton:
@@ -167,17 +184,21 @@ class ChangeCase(PalettePlugin):
 						if not f.glyphs[newGlyphName]:
 							# leave it if casefolded version does not exist:
 							newGlyphName = g.name
-						newText += "/%s " % (newGlyphName)
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 
 					# Number
 					elif g.category == "Number" and f.glyphs[g.name+'.osf']:
-						newText += "/%s " % (g.name+'.osf')
+						newGlyphName = g.name+'.osf'
+						newLayers.append( f.glyphForName_(newGlyphName).layers[l.name] )
 
 					#everything else
 					else:
-						newText += "/%s " % (g.name)
+						newLayers.append( l )						
 				
 				previousGlyphTypeIsSeparator = False
 				
-			# replace text in tab:
-			tab.text = newText
+			# replace layers in tab:
+			if tab.textRange != 0:				
+				newLayers.extend( newLayersEnd )
+			
+			tab.layers = newLayers
